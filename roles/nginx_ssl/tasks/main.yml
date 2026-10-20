@@ -1,0 +1,49 @@
+---
+- name: Install Nginx and OpenSSL
+  apt:
+    name:
+      - nginx
+      - openssl
+    state: present
+
+- name: Ensure SSL directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ ssl_cert_dir }}"
+    - "{{ ssl_key_dir }}"
+
+- name: Generate self-signed SSL certificate with SAN for {{ domain_name }}
+  shell: |
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048       -keyout {{ ssl_key_dir }}/{{ domain_name }}.key       -out {{ ssl_cert_dir }}/{{ domain_name }}.crt       -subj "/CN={{ domain_name }}/O=ISTAD DevOps/C=KH"       -addext "subjectAltName=DNS:{{ domain_name }},DNS:localhost,IP:{{ ansible_host }}"
+  args:
+    creates: "{{ ssl_cert_dir }}/{{ domain_name }}.crt"
+  when: ssl_cert_type == 'self_signed'
+
+- name: Deploy Nginx reverse proxy configuration for {{ domain_name }}
+  template:
+    src: reverse_proxy.conf.j2
+    dest: "/etc/nginx/sites-available/{{ domain_name }}.conf"
+    mode: '0644'
+  notify: Reload Nginx
+
+- name: Enable Nginx site for {{ domain_name }}
+  file:
+    src: "/etc/nginx/sites-available/{{ domain_name }}.conf"
+    dest: "/etc/nginx/sites-enabled/{{ domain_name }}.conf"
+    state: link
+  notify: Reload Nginx
+
+- name: Remove default Nginx site configuration
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload Nginx
+
+- name: Ensure Nginx is running and enabled
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes

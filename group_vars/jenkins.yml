@@ -1,0 +1,7 @@
+---
+jenkins_service_port: 8080
+jenkins_jnlp_port: 50000
+jenkins_domain: "jenkins.devops.local"
+jenkins_image: "jenkins/jenkins:lts-jdk17"
+jenkins_dir: "{{ app_root_dir }}/jenkins"
+jenkins_home: "{{ app_root_dir }}/jenkins/jenkins_home"

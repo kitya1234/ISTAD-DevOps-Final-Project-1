@@ -1,0 +1,6 @@
+---
+nexus_service_port: 8081
+nexus_domain: "nexus.devops.local"
+nexus_dir: "{{ app_root_dir }}/nexus"
+nexus_data_dir: "{{ app_root_dir }}/nexus/data"
+nexus_image: "sonatype/nexus3:latest"

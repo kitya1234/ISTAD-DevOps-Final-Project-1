@@ -1,0 +1,56 @@
+---
+- name: Apply sysctl settings for SonarQube / Elasticsearch
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+    sysctl_set: yes
+    sysctl_file: /etc/sysctl.d/99-sonarqube.conf
+  loop: "{{ sonarqube_sysctl_settings }}"
+
+- name: Set security ulimits for SonarQube
+  copy:
+    dest: /etc/security/limits.d/99-sonarqube.conf
+    content: |
+      * soft nofile 65536
+      * hard nofile 65536
+      * soft nproc 4096
+      * hard nproc 4096
+    mode: '0644'
+
+- name: Create SonarQube directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "1000"
+    group: "1000"
+    mode: '0775'
+  loop:
+    - "{{ sonarqube_dir }}"
+    - "{{ sonarqube_dir }}/data"
+    - "{{ sonarqube_dir }}/extensions"
+    - "{{ sonarqube_dir }}/logs"
+    - "{{ sonarqube_dir }}/postgres_data"
+
+- name: Deploy SonarQube docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ sonarqube_dir }}/docker-compose.yml"
+    mode: '0644'
+
+- name: Start SonarQube Docker Compose stack
+  command: docker compose up -d
+  args:
+    chdir: "{{ sonarqube_dir }}"
+
+- name: Wait for SonarQube port {{ sonarqube_service_port }} to open
+  wait_for:
+    host: 127.0.0.1
+    port: "{{ sonarqube_service_port }}"
+    delay: 15
+    timeout: 300
+
+- name: SonarQube status message
+  debug:
+    msg: "SonarQube is running! Access via https://{{ sonarqube_domain }} (Default credentials: admin / admin)"

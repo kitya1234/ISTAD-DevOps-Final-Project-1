@@ -1,0 +1,95 @@
+---
+# ==============================================================================
+# Teardown & Reset Playbook - ISTAD DevOps Project 1
+# Gracefully stops, removes containers, volumes, configs, and resets state.
+# ==============================================================================
+
+- name: Teardown Jenkins Stack (Machine 01)
+  hosts: jenkins
+  become: yes
+  tasks:
+    - name: Tear down Jenkins Docker Compose stack
+      shell: docker compose down -v --remove-orphans
+      args:
+        chdir: "{{ jenkins_dir }}"
+      ignore_errors: yes
+
+    - name: Remove Jenkins site from Nginx
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/etc/nginx/sites-enabled/{{ domain_name }}.conf"
+        - "/etc/nginx/sites-available/{{ domain_name }}.conf"
+        - "{{ ssl_cert_dir }}/{{ domain_name }}.crt"
+        - "{{ ssl_key_dir }}/{{ domain_name }}.key"
+      ignore_errors: yes
+
+- name: Teardown SonarQube Stack (Machine 02)
+  hosts: sonarqube
+  become: yes
+  tasks:
+    - name: Tear down SonarQube & Postgres Docker Compose stack
+      shell: docker compose down -v --remove-orphans
+      args:
+        chdir: "{{ sonarqube_dir }}"
+      ignore_errors: yes
+
+    - name: Remove SonarQube site from Nginx
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/etc/nginx/sites-enabled/{{ domain_name }}.conf"
+        - "/etc/nginx/sites-available/{{ domain_name }}.conf"
+        - "{{ ssl_cert_dir }}/{{ domain_name }}.crt"
+        - "{{ ssl_key_dir }}/{{ domain_name }}.key"
+        - "/etc/sysctl.d/99-sonarqube.conf"
+      ignore_errors: yes
+
+- name: Teardown Nexus Stack (Machine 03)
+  hosts: nexus
+  become: yes
+  tasks:
+    - name: Tear down Nexus Docker Compose stack
+      shell: docker compose down -v --remove-orphans
+      args:
+        chdir: "{{ nexus_dir }}"
+      ignore_errors: yes
+
+    - name: Remove Nexus site from Nginx
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/etc/nginx/sites-enabled/{{ domain_name }}.conf"
+        - "/etc/nginx/sites-available/{{ domain_name }}.conf"
+        - "{{ ssl_cert_dir }}/{{ domain_name }}.crt"
+        - "{{ ssl_key_dir }}/{{ domain_name }}.key"
+      ignore_errors: yes
+
+- name: Clean Shared Infrastructure on All Nodes
+  hosts: all_nodes
+  become: yes
+  tasks:
+    - name: Stop and remove Portainer container
+      shell: |
+        docker stop portainer || true
+        docker rm -f portainer || true
+        docker volume rm portainer_data || true
+      ignore_errors: yes
+
+    - name: Purge application root directory ({{ app_root_dir }})
+      file:
+        path: "{{ app_root_dir }}"
+        state: absent
+
+    - name: Restart Nginx to clean active listeners
+      systemd:
+        name: nginx
+        state: restarted
+      ignore_errors: yes
+
+    - name: Confirm reset completion
+      debug:
+        msg: "Host {{ inventory_hostname }} has been completely reset and cleaned."

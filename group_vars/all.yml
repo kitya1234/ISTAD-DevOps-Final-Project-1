@@ -1,0 +1,35 @@
+---
+ansible_user: ubuntu
+app_root_dir: /opt/devops-stack
+ssl_cert_dir: /etc/ssl/certs
+ssl_key_dir: /etc/ssl/private
+ssl_cert_type: self_signed 
+
+# Common system packages to install
+common_packages:
+  - tree
+  - curl
+  - wget
+  - git
+  - zsh
+  - unzip
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - software-properties-common
+  - apt-transport-https
+  - htop
+  - net-tools
+
+# Portainer Configuration
+portainer_enabled: true
+portainer_http_port: 9000
+portainer_https_port: 9443
+portainer_image: "portainer/portainer-ce:latest"
+
+# Oh My Zsh Configuration
+omz_theme: "robbyrussell"
+omz_plugins:
+  - git
+  - docker
+  - sudo

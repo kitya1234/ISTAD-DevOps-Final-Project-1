@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  machine01:
+    image: rastasheep/ubuntu-sshd:20.04
+    container_name: lab-machine01
+    hostname: machine01
+    ports:
+      - "2201:22"
+      - "8443:443"
+    privileged: true
+
+  machine02:
+    image: rastasheep/ubuntu-sshd:20.04
+    container_name: lab-machine02
+    hostname: machine02
+    ports:
+      - "2202:22"
+      - "9443:443"
+    privileged: true
+
+  machine03:
+    image: rastasheep/ubuntu-sshd:20.04
+    container_name: lab-machine03
+    hostname: machine03
+    ports:
+      - "2203:22"
+      - "10443:443"
+    privileged: true

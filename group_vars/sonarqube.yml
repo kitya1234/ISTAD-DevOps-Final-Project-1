@@ -1,0 +1,20 @@
+---
+sonarqube_service_port: 9000
+sonarqube_domain: "sonarqube.devops.local"
+sonarqube_dir: "{{ app_root_dir }}/sonarqube"
+sonarqube_image: "sonarqube:lts-community"
+postgres_image: "postgres:15-alpine"
+
+# PostgreSQL Database Configuration for SonarQube
+sonar_db_user: "sonar"
+sonar_db_password: "SonarSecurePassword2026!"
+sonar_db_name: "sonarqube"
+
+# Linux Kernel sysctl requirements for Elasticsearch inside SonarQube
+sonarqube_sysctl_settings:
+  - name: "vm.max_map_count"
+    value: "262144"
+  - name: "fs.file-max"
+    value: "65536"
+  - name: "vm.output_max_threads"
+    value: "262144"

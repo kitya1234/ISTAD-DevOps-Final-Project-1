@@ -1,0 +1,64 @@
+---
+# ==============================================================================
+# Master Provisioning Playbook - ISTAD DevOps Project 1
+# ==============================================================================
+
+- name: Phase 1 - Global Prerequisites & Base Tools on All Nodes
+  hosts: all_nodes
+  become: yes
+  roles:
+    - common
+    - docker
+    - portainer
+
+- name: Phase 2 - Provision Jenkins (Machine 01)
+  hosts: jenkins
+  become: yes
+  roles:
+    - jenkins
+    - nginx_ssl
+
+- name: Phase 3 - Provision SonarQube (Machine 02)
+  hosts: sonarqube
+  become: yes
+  roles:
+    - sonarqube
+    - nginx_ssl
+
+- name: Phase 4 - Provision Nexus Repository (Machine 03)
+  hosts: nexus
+  become: yes
+  roles:
+    - nexus
+    - nginx_ssl
+
+- name: Phase 5 - Verification & Deployment Summary
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Print Access and Verification Summary
+      debug:
+        msg:
+          - "=========================================================="
+          - "         PROJECT 1 INFRASTRUCTURE PROVISIONED SUCCESS      "
+          - "=========================================================="
+          - "Machine 01 (Jenkins):"
+          - "  - URL: https://jenkins.devops.local"
+          - "  - Portainer: https://{{ hostvars['machine01']['ansible_host'] }}:9443"
+          - "  - Admin Password File: /opt/devops-stack/jenkins/jenkins_home/secrets/initialAdminPassword"
+          - "Machine 02 (SonarQube):"
+          - "  - URL: https://sonarqube.devops.local"
+          - "  - Default Login: admin / admin"
+          - "  - Portainer: https://{{ hostvars['machine02']['ansible_host'] }}:9443"
+          - "Machine 03 (Nexus):"
+          - "  - URL: https://nexus.devops.local"
+          - "  - Admin Password File: /opt/devops-stack/nexus/data/admin.password"
+          - "  - Portainer: https://{{ hostvars['machine03']['ansible_host'] }}:9443"
+          - "=========================================================="
+          - "DNS/Hosts configuration tip:"
+          - "Add the following to /etc/hosts on your client/control machine:"
+          - "{{ hostvars['machine01']['ansible_host'] }}  jenkins.devops.local"
+          - "{{ hostvars['machine02']['ansible_host'] }}  sonarqube.devops.local"
+          - "{{ hostvars['machine03']['ansible_host'] }}  nexus.devops.local"
+          - "=========================================================="

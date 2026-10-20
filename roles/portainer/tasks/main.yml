@@ -1,0 +1,21 @@
+---
+- name: Check if Portainer container exists
+  command: docker ps -a -q -f name=portainer
+  register: portainer_check
+  changed_when: false
+
+- name: Create Portainer volume
+  command: docker volume create portainer_data
+  when: portainer_check.stdout == ""
+
+- name: Run Portainer CE container
+  command: >
+    docker run -d
+    -p {{ portainer_https_port }}:9443
+    -p {{ portainer_http_port }}:9000
+    --name portainer
+    --restart=always
+    -v /var/run/docker.sock:/var/run/docker.sock
+    -v portainer_data:/data
+    {{ portainer_image }}
+  when: portainer_check.stdout == ""
